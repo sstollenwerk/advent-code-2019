@@ -1,6 +1,7 @@
 use crate::lib::to_filename;
 
 use std::fs;
+use std::iter::successors;
 
 type Num = i32;
 
@@ -20,13 +21,18 @@ fn required_fuel(n: Num) -> Num {
     n / 3 - 2
 }
 
-fn total_required_fuel(m: Num) -> Num {
-    let n = required_fuel(m).max(0);
-    if n <= 0 {
-        0
+fn part_req_fuel(n: &Num) -> Option<Num> {
+    let k = required_fuel(*n);
+    if k <= 0 {
+        None
     } else {
-        n + total_required_fuel(n)
+        Some(k)
     }
+}
+
+fn total_required_fuel(n: Num) -> Num {
+    let fuels = successors(Some(n), part_req_fuel);
+    fuels.sum::<Num>() - n
 }
 
 pub fn part1() -> Num {
