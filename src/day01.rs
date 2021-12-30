@@ -21,17 +21,8 @@ fn required_fuel(n: Num) -> Num {
     n / 3 - 2
 }
 
-fn part_req_fuel(n: &Num) -> Option<Num> {
-    let k = required_fuel(*n);
-    if k <= 0 {
-        None
-    } else {
-        Some(k)
-    }
-}
-
 fn total_required_fuel(n: Num) -> Num {
-    let fuels = successors(Some(n), part_req_fuel);
+    let fuels = successors(Some(n), |n| Some(required_fuel(*n))).take_while(|&x| x > 0);
     fuels.sum::<Num>() - n
 }
 
