@@ -22,8 +22,10 @@ fn required_fuel(n: Num) -> Num {
 }
 
 fn total_required_fuel(n: Num) -> Num {
-    let fuels = successors(Some(n), |n| Some(required_fuel(*n))).take_while(|&x| x > 0);
-    fuels.sum::<Num>() - n
+    successors(Some(n), |n| Some(required_fuel(*n)))
+        .take_while(|&x| x > 0)
+        .skip(1)
+        .sum()
 }
 
 pub fn part1() -> Num {
