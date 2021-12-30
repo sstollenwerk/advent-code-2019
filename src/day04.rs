@@ -10,7 +10,7 @@ fn get_data() -> impl Iterator<Item = Num> {
     fs::read_to_string(to_filename(4))
         .expect("Could not read file")
         .lines()
-        .map(|s| read_row(s))
+        .map(read_row)
         .next()
         .unwrap()
 }
@@ -43,18 +43,15 @@ fn valid(n: &Num) -> bool {
         .chars()
         .collect::<Counter<_>>()
         .values()
-        .collect::<Vec<_>>()
-        .contains(&&2);
+        .any(|x| x == &2);
 
     sorted_ && double
 }
 
 pub fn part1() -> usize {
-    let posses: Vec<_> = get_data().filter(valid_old).collect();
-    posses.len()
+    get_data().filter(valid_old).count()
 }
 
 pub fn part2() -> usize {
-    let posses: Vec<_> = get_data().filter(valid).collect();
-    posses.len()
+    get_data().filter(valid).count()
 }
