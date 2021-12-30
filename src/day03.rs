@@ -49,6 +49,15 @@ fn points(deltas: &Path) -> Path {
         .collect()
 }
 
+fn distances(deltas: &Path) -> Vec<Num> {
+    deltas
+        .iter()
+        .scan(0, |state, &c| {
+            *state += manhatten_dist(&c);
+            Some(*state)
+        })
+        .collect()
+}
 fn intersection(a: &Line, b: &Line) -> Option<Position> {
     // https://en.wikipedia.org/wiki/Line–line_intersection#Given_two_points_on_each_line_segment
 
@@ -100,5 +109,22 @@ pub fn part1() -> Num {
 }
 
 pub fn part2() -> Num {
-    todo!();
+    let rows = get_data();
+    let ax: Vec<Line> = points(&rows[0]).into_iter().tuple_windows().collect();
+    let ad: Vec<Num> = distances(&rows[0]);
+    let bx: Vec<Line> = points(&rows[1]).into_iter().tuple_windows().collect();
+    let bd: Vec<Num> = distances(&rows[1]);
+
+    let mut intersections = Vec::new();
+    for (a, da) in ax.iter().zip(ad.iter()) {
+        for (b, db) in bx.iter().zip(bd.iter()) {
+            if let Some(p) = intersection(a, b) {
+                let d1 = manhatten_dist(&(p - a.0)) + *da;
+                let d2 = manhatten_dist(&(p - b.0)) + *db;
+                intersections.push(d1 + d2);
+            }
+        }
+    }
+
+    *intersections.iter().min().unwrap()
 }
