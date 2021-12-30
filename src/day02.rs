@@ -22,16 +22,11 @@ fn read_row(row: &str) -> Program {
 fn interpret(mut data: Program) -> Program {
     let mut i = 0;
     loop {
-
-
         let op = data[i];
         if op == 99 {
             break;
         };
         let (a, b, c) = (data[i + 1], data[i + 2], data[i + 3]);
-
-
-
 
         let (v1, v2) = (data[a], data[b]);
         data[c] = match op {
@@ -50,14 +45,24 @@ pub fn part1() -> Num {
     vals[1] = 12;
     vals[2] = 2;
 
-    let res =  interpret(vals) ;
+    let res = interpret(vals);
 
-    println!("{:?}",res);
     res[0]
 }
 
 pub fn part2() -> Num {
     let vals = get_data();
 
-    todo!();
+    for noun in 0..100 {
+        for verb in 0..100 {
+            let mut v = vals.clone();
+            v[1] = noun;
+            v[2] = verb;
+            let res = interpret(v);
+            if res[0] == 19690720 {
+                return 100 * noun + verb;
+            };
+        }
+    }
+    panic!();
 }
