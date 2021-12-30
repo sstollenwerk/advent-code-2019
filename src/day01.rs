@@ -20,6 +20,15 @@ fn required_fuel(n: Num) -> Num {
     n / 3 - 2
 }
 
+fn total_required_fuel(m: Num) -> Num {
+    let n = required_fuel(m).max(0);
+    if n <= 0 {
+        0
+    } else {
+        n + total_required_fuel(n)
+    }
+}
+
 pub fn part1() -> Num {
     let vals = get_data();
 
@@ -27,5 +36,7 @@ pub fn part1() -> Num {
 }
 
 pub fn part2() -> Num {
-    todo!();
+    let vals = get_data();
+
+    vals.into_iter().map(|x| total_required_fuel(x)).sum()
 }
