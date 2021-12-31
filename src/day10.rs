@@ -44,8 +44,6 @@ fn read_row(row: &str) -> Vec<bool> {
 }
 
 fn colinear(a: Point, b: Point) -> bool {
-    // should check if b is blocked by a
-
     let scale = if a.re != 0 {
         F::new(b.re, a.re)
     } else {
@@ -54,55 +52,35 @@ fn colinear(a: Point, b: Point) -> bool {
 
     (a.re.signum() == b.re.signum())
         && (a.im.signum() == b.im.signum())
-        && (( F::new(a.im, 1) * scale)  == F::new(b.im, 1))
-        && ((F::new(a.re, 1) * scale)  == F::new(b.re, 1))
+        && ((F::new(a.im, 1) * scale) == F::new(b.im, 1))
+        && ((F::new(a.re, 1) * scale) == F::new(b.re, 1))
 }
 
 fn block(a: Point, b: Point) -> bool {
     // should check if b is blocked by a
     // not if a is blocked by b
     let origin = Point::new(0, 0);
-    (a != origin)
-        && (b != origin)
-        && colinear(a, b)
-        && (b.l1_norm() > a.l1_norm())
+    (a != origin) && (b != origin) && colinear(a, b) && (b.l1_norm() > a.l1_norm())
 }
 
 fn see(p: Point, asts: &Positions) -> usize {
     let mut deltas: Positions = asts.iter().map(|&c| c - p).collect();
     deltas.remove(&Point::new(0, 0));
 
-    // let d = deltas.iter();
-
-    // println!("{:?}", deltas);
-
-    let blocks: Vec<_> = deltas
+    let blocked = deltas
         .iter()
         .cartesian_product(deltas.iter())
         .filter(|(a, b)| block(**a, **b))
-        .collect();
- //   println!("{:?}", blocks);
+        .map(|(_, b)| *b);
 
-    let blocked: Positions = blocks.into_iter().map(|(_, b)| *b).collect();
- //   println!("{:?}", blocked);
-
-    let res = deltas.len() - blocked.len();
-  //  println!("{:?}", (p, res));
-    res
+    deltas.len() - blocked.count()
 }
 
 pub fn part1() -> usize {
     let data = get_data();
     println!("{:?}", data);
-    //  println!("{:?}", 0_f64/0_f64);
 
-     data.iter().map(|c| see(*c, &data)).max().unwrap()
-    // let vals: Vec<_> =  data.iter().map(|c| see(*c, &data)  ).collect();
-   // println!("{:?}", see(Complex { re: 4, im: 3 }, &data));
-
-    // println!("{:?}", vals);
-
- //   todo!();
+    data.iter().map(|c| see(*c, &data)).max().unwrap()
 }
 
 pub fn part2() -> Num {
