@@ -24,7 +24,7 @@ fn read_program(row: &str) -> Program {
     row.split(',').map(|s| s.parse::<Num>().unwrap()).collect()
 }
 
-pub fn display<V: std::fmt::Debug>(data: &HashMap<Complex<Num>, V>) {
+fn to_grid<V>(data: &HashMap<Complex<Num>, V>) -> Vec<Vec<&V>> {
     let largest = data.keys().map(|c| (c.re, c.im)).max().unwrap();
 
     let mut grid = Vec::new();
@@ -39,7 +39,18 @@ pub fn display<V: std::fmt::Debug>(data: &HashMap<Complex<Num>, V>) {
         grid.push(res);
     }
 
-    for i in grid {
+    grid
+}
+
+pub fn s_display(data: &HashMap<Complex<Num>, char>) {
+    for i in to_grid(data) {
+        println!("{:}", i.iter().cloned().collect::<String>());
+    }
+    println!();
+}
+
+pub fn display<V: std::fmt::Debug>(data: &HashMap<Complex<Num>, V>) {
+    for i in to_grid(data) {
         //  println!("{:}", i.iter().cloned().collect::<String>());
         println!("{:?}", i);
     }

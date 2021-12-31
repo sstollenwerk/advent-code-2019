@@ -1,5 +1,5 @@
 use crate::lib::Num;
-use crate::lib::{display, to_filename};
+use crate::lib::{display, s_display, to_filename};
 
 use std::fs;
 
@@ -54,6 +54,33 @@ fn get_image() -> Image {
     make_image(&raw, size)
 }
 
+fn rendered(im: Image) -> Layer {
+    let mut base = im[0].clone();
+    let keys = im[0].keys();
+
+    for c in keys {
+        let mut i = 0;
+        while im[i][c] == 2 {
+            i += 1;
+        }
+        base.insert(*c, im[i][c]);
+    }
+    base
+}
+
+fn format(im: Layer) -> HashMap<Position, char> {
+    let mut res = HashMap::new();
+    for (k, val) in im.iter() {
+        let v = match val {
+            0 => ' ',
+            1 => '*',
+            _ => panic!(),
+        };
+        res.insert(*k, v);
+    }
+    res
+}
+
 pub fn part1() -> Num {
     let image = get_image();
 
@@ -66,6 +93,10 @@ pub fn part1() -> Num {
     (best[&1] * best[&2]).try_into().unwrap()
 }
 
-pub fn part2() -> Num {
-    todo!();
+pub fn part2() {
+    let image = get_image();
+
+    let r = rendered(image);
+
+    s_display(&format(r))
 }
