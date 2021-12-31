@@ -168,5 +168,11 @@ pub fn part1() -> Num {
 }
 
 pub fn part2() -> Num {
-    todo!();
+    let prog = get_data_program(9);
+
+    let res = run(&prog, &vec![2]);
+    println!("{:?}", res);
+
+    res[0]
+
 }
