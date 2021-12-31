@@ -1,8 +1,10 @@
 #![feature(is_sorted)]
+//#![feature(generators, generator_trait)]
+// couldn't figure out how to pass data to the generator
 #![allow(unused_parens)]
 
-mod day06;
-use day06::{part1, part2};
+mod day07;
+use day07::{part1, part2};
 mod lib;
 
 fn main() {
