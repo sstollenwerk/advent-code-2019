@@ -3,7 +3,8 @@ use crate::lib::{display, s_display, to_filename};
 
 use std::fs;
 
-use counter::Counter;
+use fraction::GenericFraction;
+use itertools::Itertools;
 use num_complex::Complex;
 
 use std::collections::HashSet;
@@ -11,6 +12,8 @@ use std::collections::HashSet;
 type Point = Complex<Num>;
 
 type Positions = HashSet<Point>;
+
+type F = GenericFraction<Num>;
 
 fn get_data() -> Positions {
     let mut res = Positions::new();
@@ -42,51 +45,64 @@ fn read_row(row: &str) -> Vec<bool> {
 
 fn colinear(a: Point, b: Point) -> bool {
     // should check if b is blocked by a
-    // not if a is blocked by b
 
-    let scale = (b.re as f64) / (a.re as f64);
+    let scale = if a.re != 0 {
+        F::new(b.re, a.re)
+    } else {
+        F::new(b.im, a.im)
+    };
 
     (a.re.signum() == b.re.signum())
         && (a.im.signum() == b.im.signum())
-        && ((a.im as f64 * scale).round() as Num == b.im)
+        && (( F::new(a.im, 1) * scale)  == F::new(b.im, 1))
+        && ((F::new(a.re, 1) * scale)  == F::new(b.re, 1))
 }
 
 fn block(a: Point, b: Point) -> bool {
     // should check if b is blocked by a
     // not if a is blocked by b
-    colinear(a, b) && (b.re.abs() > a.re.abs())
+    let origin = Point::new(0, 0);
+    (a != origin)
+        && (b != origin)
+        && colinear(a, b)
+        && (b.l1_norm() > a.l1_norm())
 }
 
-fn testing() {
-    let places = vec![
-        Point::new(1, 2),
-        Point::new(2, 4),
-        Point::new(-2, -4),
-        Point::new(2, 5),
-    ];
+fn see(p: Point, asts: &Positions) -> usize {
+    let mut deltas: Positions = asts.iter().map(|&c| c - p).collect();
+    deltas.remove(&Point::new(0, 0));
 
-    let vals = vec![
-        block(places[0], places[1]),
-        block(places[2], places[1]),
-        block(places[1], places[0]),
-        block(places[0], places[3]),
-    ];
+    // let d = deltas.iter();
 
-    let vals2 = vec![
-        colinear(places[0], places[1]),
-        colinear(places[2], places[1]),
-        colinear(places[1], places[0]),
-        colinear(places[0], places[3]),
-    ];
+    // println!("{:?}", deltas);
 
-    println!("{:?}", vals);
-    println!("{:?}", vals2);
+    let blocks: Vec<_> = deltas
+        .iter()
+        .cartesian_product(deltas.iter())
+        .filter(|(a, b)| block(**a, **b))
+        .collect();
+ //   println!("{:?}", blocks);
+
+    let blocked: Positions = blocks.into_iter().map(|(_, b)| *b).collect();
+ //   println!("{:?}", blocked);
+
+    let res = deltas.len() - blocked.len();
+  //  println!("{:?}", (p, res));
+    res
 }
 
-pub fn part1() -> Num {
+pub fn part1() -> usize {
     let data = get_data();
     println!("{:?}", data);
-    todo!();
+    //  println!("{:?}", 0_f64/0_f64);
+
+     data.iter().map(|c| see(*c, &data)).max().unwrap()
+    // let vals: Vec<_> =  data.iter().map(|c| see(*c, &data)  ).collect();
+   // println!("{:?}", see(Complex { re: 4, im: 3 }, &data));
+
+    // println!("{:?}", vals);
+
+ //   todo!();
 }
 
 pub fn part2() -> Num {
