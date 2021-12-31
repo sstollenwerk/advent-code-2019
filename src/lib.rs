@@ -1,13 +1,13 @@
 use std::fs;
 
-pub type Num = i32;
+pub type Num = i64;
 pub type Program = Vec<Num>;
 pub type Data = Vec<Num>;
 
 use num_complex::Complex;
 use std::collections::HashMap;
 
-pub fn to_filename(day: i32) -> String {
+pub fn to_filename(day: Num) -> String {
     format!("input/{:0>2}.txt", day)
 }
 

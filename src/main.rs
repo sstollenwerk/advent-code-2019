@@ -1,8 +1,8 @@
 #![feature(is_sorted)]
 #![allow(unused_parens)]
 
-mod day08;
-use day08::{part1, part2};
+mod day09;
+use day09::{part1, part2};
 mod lib;
 
 fn main() {
