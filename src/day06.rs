@@ -6,6 +6,7 @@ use core::hash::Hash;
 use core::hash::Hasher;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use cached::proc_macro::cached;
 
@@ -79,6 +80,23 @@ fn orbits(g: Graph) -> Num {
         .sum()
 }
 
+fn dist(a:String, b:String, g:Graph ) -> Num  {
+
+    let mut ax = ancestors(a, g.clone());
+    let asize = ax.len();
+    ax.reverse();
+    let bx:HashSet<String> = ancestors(b, g.clone()).into_iter().collect();
+    let bsize = bx.len();
+
+    for s in ax.into_iter() {
+        if bx.contains(&s) {
+            println!("{:?}", s);
+
+            return (bsize + asize) as Num - 2* num_ancestors(s,g.clone() ) - 2
+        }
+    }
+    panic!();
+}
 
 
 pub fn part1() -> Num {
@@ -87,5 +105,5 @@ pub fn part1() -> Num {
 }
 
 pub fn part2() -> Num {
-    todo!();
+    dist("YOU".to_string() , "SAN".to_string(),  get_data())
 }
