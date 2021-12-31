@@ -54,17 +54,32 @@ fn read_row(row: &str) -> (String, String) {
 }
 
 #[cached]
-fn ancestors(s: String, g: Graph) -> Num {
+fn num_ancestors(s: String, g: Graph) -> Num {
+    ancestors(s, g).len().try_into().unwrap()
+}
+
+#[cached]
+fn ancestors(s: String, g: Graph) -> Vec<String> {
     if let Some(a) = g.get(&s) {
-        1 + ancestors(a.to_string(), g)
-    } else {
-        0
+        let k = a.to_string();
+        let mut prev = ancestors(k.clone(), g);
+        prev.push(k);
+        prev
     }
+
+    else {
+        Vec::new()
+    }
+
 }
 
 fn orbits(g: Graph) -> Num {
-    g.keys().map(|s| ancestors(s.to_string(), g.clone())).sum()
+    g.keys()
+        .map(|s| num_ancestors(s.to_string(), g.clone()))
+        .sum()
 }
+
+
 
 pub fn part1() -> Num {
     println!("{:?}", get_data());
