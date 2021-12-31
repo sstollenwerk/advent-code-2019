@@ -7,6 +7,10 @@ fn required_positions(n: Num) -> Num {
         2 => 3,
         3 => 1,
         4 => 1,
+        5 => 2,
+        6 => 2,
+        7 => 3,
+        8 => 3,
         99 => 0,
         _ => panic!(),
     }
@@ -43,15 +47,29 @@ fn interpret(mut data: Program, input_: &Data) -> Data {
         } else {
             &mut p
         };
-        i += 1;
 
         match op {
             1 => *res = registers[0] + registers[1],
             2 => *res = registers[0] * registers[1],
             3 => *res = *input.next().unwrap(),
             4 => output.push(*res),
+            5 => {
+                if registers[0] != 0 {
+                    i = *res as usize;
+                    continue;
+                }
+            }
+            6 => {
+                if registers[0] == 0 {
+                    i = *res as usize;
+                    continue;
+                }
+            }
+            7 => *res = (registers[0] < registers[1]) as Num,
+            8 => *res = (registers[0] == registers[1]) as Num,
             _ => panic!(),
         }
+        i += 1;
     }
 
     output
@@ -68,5 +86,11 @@ pub fn part1() -> Num {
 }
 
 pub fn part2() -> Num {
-    todo!();
+    let vals = get_data_program(5);
+
+    let res = interpret(vals, &vec![5]);
+
+    println!("{:?}", res);
+
+    res[0]
 }
