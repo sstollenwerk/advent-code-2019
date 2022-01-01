@@ -3,6 +3,9 @@ use crate::lib::{display, s_display, to_filename};
 
 use std::fs;
 
+use core::ops::Deref;
+use std::slice::Iter;
+
 use fraction::GenericFraction;
 use itertools::Itertools;
 use num_complex::Complex;
@@ -43,6 +46,38 @@ fn read_row(row: &str) -> Vec<bool> {
         .collect()
 }
 
+fn polar(p: Point) -> (f64, f64) {
+    let p_ = Complex::new(p.re as f64, p.im as f64);
+
+    p_.to_polar()
+}
+
+fn equivalence_classes<'a, T: 'a + Copy, G>(vals: impl Iterator<Item = &'a T>, f: G) -> Vec<Vec<T>>
+where
+    G: Fn(T, T) -> bool,
+{
+    let mut data: Vec<Vec<T>> = Vec::new();
+    for el in vals {
+        let mut seen = false;
+
+        for (i, g) in data.iter().enumerate() {
+            if f(g[0], *el) {
+                let mut g_ = g.clone();
+                g_.push(*el);
+                data[i] = g_;
+                seen = true;
+                break;
+            }
+        }
+
+        if !seen {
+            data.push(vec![*el])
+        }
+    }
+
+    data
+}
+
 fn colinear(a: Point, b: Point) -> bool {
     let scale = if a.re != 0 {
         F::new(b.re, a.re)
@@ -54,6 +89,12 @@ fn colinear(a: Point, b: Point) -> bool {
         && (a.im.signum() == b.im.signum())
         && ((F::new(a.im, 1) * scale) == F::new(b.im, 1))
         && ((F::new(a.re, 1) * scale) == F::new(b.re, 1))
+
+    /*
+        polar(a).1 == polar(b).1
+
+        didn't work. Not sure whether alg was wrong or f64 is insufficient. Assuminmg latter
+    */
 }
 
 fn block(a: Point, b: Point) -> bool {
@@ -67,13 +108,17 @@ fn see(p: Point, asts: &Positions) -> usize {
     let mut deltas: Positions = asts.iter().map(|&c| c - p).collect();
     deltas.remove(&Point::new(0, 0));
 
-    let blocked = deltas
+    let blocked: Positions = deltas
         .iter()
         .cartesian_product(deltas.iter())
         .filter(|(a, b)| block(**a, **b))
-        .map(|(_, b)| *b);
+        .map(|(_, b)| *b)
+        .collect();
 
-    deltas.len() - blocked.count()
+    let res = deltas.len() - blocked.len();
+
+    assert_eq!(res, equivalence_classes(deltas.iter(), colinear).len());
+    res
 }
 
 pub fn part1() -> usize {
