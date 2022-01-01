@@ -9,8 +9,10 @@ use std::slice::Iter;
 use fraction::GenericFraction;
 use itertools::Itertools;
 use num_complex::Complex;
+use ordered_float::OrderedFloat;
 
 use std::collections::HashSet;
+use std::collections::VecDeque;
 
 type Point = Complex<Num>;
 
@@ -104,30 +106,69 @@ fn block(a: Point, b: Point) -> bool {
     (a != origin) && (b != origin) && colinear(a, b) && (b.l1_norm() > a.l1_norm())
 }
 
-fn see(p: Point, asts: &Positions) -> usize {
+fn groups(p: Point, asts: &Positions) -> Vec<Vec<Point>> {
     let mut deltas: Positions = asts.iter().map(|&c| c - p).collect();
     deltas.remove(&Point::new(0, 0));
 
-    let blocked: Positions = deltas
-        .iter()
-        .cartesian_product(deltas.iter())
-        .filter(|(a, b)| block(**a, **b))
-        .map(|(_, b)| *b)
-        .collect();
+    equivalence_classes(deltas.iter(), colinear)
+}
 
-    let res = deltas.len() - blocked.len();
+fn ast_order(p: Point, asts: &Positions) -> Vec<Point> {
+    let g_ = groups(p, asts);
+    let mut g = Vec::new();
+    for (i, el_) in g_.iter().enumerate() {
+        let mut el = el_.to_vec();
+        el.sort_by_key(|c| c.l1_norm());
+        el.reverse();
+        g.push(el);
+    }
 
-    assert_eq!(res, equivalence_classes(deltas.iter(), colinear).len());
+    g.sort_by_key(|cx| {
+        OrderedFloat(
+            (std::f64::consts::TAU + polar(cx[0]).1 - polar(Point::new(0, -1)).1)
+                % std::f64::consts::TAU,
+        )
+    });
+
+    let mut q = VecDeque::new();
+    for i in g.into_iter() {
+        q.push_back(i);
+    }
+
+    let mut res = Vec::new();
+    while q.len() > 0 {
+        let mut n = q.pop_front().unwrap();
+        let val = n.pop().unwrap() + p;
+
+        res.push(val);
+
+        if n.len() > 0 {
+            q.push_back(n);
+        }
+    }
+
     res
+}
+
+fn see(p: Point, asts: &Positions) -> usize {
+    groups(p, asts).len()
 }
 
 pub fn part1() -> usize {
     let data = get_data();
-    println!("{:?}", data);
 
     data.iter().map(|c| see(*c, &data)).max().unwrap()
 }
 
 pub fn part2() -> Num {
-    todo!();
+    let data = get_data();
+
+    let pos = *data.iter().max_by_key(|&&c| see(c, &data)).unwrap();
+
+    println!("{:?}", pos);
+
+    let nth =  ast_order(pos, &data)[199] ;
+
+    (100*nth.re + nth.im)
+
 }
