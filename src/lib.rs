@@ -9,8 +9,6 @@ pub type Data = Vec<Num>;
 use num_complex::Complex;
 use std::collections::HashMap;
 
-use itertools::Itertools;
-
 
 #[derive(PartialEq, Clone, Eq, Debug)]
 pub struct ProgramState {
@@ -28,11 +26,10 @@ impl ProgramState {
         }
     }
 
-    pub  fn base(program: &Program) -> ProgramState {
+    pub fn base(program: &Program) -> ProgramState {
         ProgramState::new(program, 0, 0)
     }
 }
-
 
 pub fn to_filename(day: Num) -> String {
     format!("input/{:0>2}.txt", day)
@@ -83,8 +80,6 @@ pub fn display<V: std::fmt::Debug>(data: &HashMap<Complex<Num>, V>) {
     }
     println!();
 }
-
-
 
 fn required_positions(n: Num) -> Num {
     match n {
