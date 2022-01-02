@@ -8,7 +8,7 @@ pub type Data = Vec<Num>;
 
 use num_complex::Complex;
 use std::collections::HashMap;
-
+use std::collections::HashSet;
 
 #[derive(PartialEq, Clone, Eq, Debug)]
 pub struct ProgramState {
@@ -64,6 +64,55 @@ fn to_grid<V>(data: &HashMap<Complex<Num>, V>) -> Vec<Vec<&V>> {
     }
 
     grid
+}
+
+pub fn upside_down(data: &HashSet<Complex<Num>>) -> HashSet<Complex<Num>> {
+    let mut res = HashSet::new();
+    let ys: HashSet<_> = data.iter().map(|c| c.im).collect();
+    if data.is_empty() {
+        return res;
+    }
+    let ma = ys.iter().max().unwrap();
+    let mi = ys.iter().min().unwrap();
+
+    for c in data.iter() {
+        let y = (ma - c.im) + mi;
+        res.insert(Complex::new(c.re, y));
+    }
+
+    res
+}
+
+pub fn to_map(data: &HashSet<Complex<Num>>) -> HashMap<Complex<Num>, char> {
+    let mut res = HashMap::new();
+
+    if data.is_empty() {
+        return res;
+    }
+
+    let ys: HashSet<_> = data.iter().map(|c| c.im).collect();
+    let xs: HashSet<_> = data.iter().map(|c| c.re).collect();
+
+    let top_left = Complex::new(*xs.iter().min().unwrap(), *ys.iter().min().unwrap());
+    let bottom_right = Complex::new(*xs.iter().max().unwrap(), *ys.iter().max().unwrap());
+
+    let size = bottom_right - top_left;
+
+    for x in (0..=size.re) {
+        for y in (0..=size.im) {
+            let p = Complex::new(x, y);
+            let contained = data.contains(&(p + top_left));
+
+            let c = match contained {
+                false => ' ',
+                true => '#',
+            };
+
+            res.insert(p, c);
+        }
+    }
+
+    res
 }
 
 pub fn s_display(data: &HashMap<Complex<Num>, char>) {

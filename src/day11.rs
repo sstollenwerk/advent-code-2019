@@ -1,6 +1,8 @@
 use crate::lib::get_data_program;
 use crate::lib::{interpret, Data, Num, Program, ProgramState};
 
+use crate::lib::{s_display, to_map, upside_down};
+
 use std::collections::HashSet;
 
 use num_complex::Complex;
@@ -55,6 +57,13 @@ pub fn part1() -> usize {
     painted.len()
 }
 
-pub fn part2() -> Num {
-    todo!();
+pub fn part2() {
+    let prog = get_data_program(11);
+
+    let mut whites_ = Positions::new();
+    whites_.insert(Position::new(0, 0));
+
+    let (_painted, whites) = run(&prog, whites_);
+
+    s_display(&to_map(&upside_down(&whites)))
 }
