@@ -14,8 +14,10 @@ def c0(p: password) -> bool:
 def c1(p: password) -> bool:
     return p == sorted(p)
 
+
 def c2(p: password) -> bool:
     return 2 in (map(ilen, (v for k, v in groupby(p))))
+
 
 def posses(s: str) -> Iterable[password]:
     base = range(*map(int, s.split("-")))
@@ -25,6 +27,7 @@ def posses(s: str) -> Iterable[password]:
 def valid1(p: password):
     return all(flist([c0, c1], p))
 
+
 def valid2(p: password):
     return all(flist([c2, c1], p))
 
@@ -32,8 +35,10 @@ def valid2(p: password):
 def part1(s: str) -> int:
     return ilen(filter(valid1, posses(s)))
 
+
 def part2(s: str) -> int:
     return ilen(filter(valid2, posses(s)))
+
 
 def main():
     s = get_file(4)

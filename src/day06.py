@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from collections import defaultdict
 from functools import cache
+from operator import eq
 
 from typing import Callable, TypeVar
 from collections.abc import Iterable
 
 
-from generic import get_file
+from generic import get_file, uncurry
 
 
 Node = TypeVar("Node")
@@ -21,7 +22,7 @@ def path_finder(parents: Parents) -> Callable[[Node], list[Node]]:
         p = parents.get(n)
         if not p:
             return []
-        return [p] + find_path(p)
+        return find_path(p) + [p]
 
     return find_path
 
@@ -41,7 +42,13 @@ def part1(s: str) -> int:
 
 
 def part2(s: str) -> int:
-    pass
+    par = make_parents(s)
+    f = path_finder(par)
+    you = f("YOU")
+    san = f("SAN")
+    shared_root = list(filter(uncurry(eq), zip(you, san)))[-1][1]
+
+    return len(you) + len(san) - 2 * (1 + len(f(shared_root)))
 
 
 def main():

@@ -108,3 +108,10 @@ def cat_maybes(xs: Iterable[T | None]) -> Iterable[T]:
     https://hackage.haskell.org/package/base-4.15.0.0/docs/Data-Maybe.html#v:catMaybes
     """
     return (i for i in xs if i is not None)
+
+
+def uncurry(f):
+    def inner(t):
+        return f(*t)
+
+    return inner

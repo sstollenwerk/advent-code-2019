@@ -1,4 +1,4 @@
-from generic import get_file
+from generic import get_file, uncurry
 
 from itertools import accumulate, starmap, product
 
@@ -52,13 +52,6 @@ def wires(deltas: list[delta]) -> list[wire]:
 
 def manhatten(p: point) -> float:
     return abs(p.real) + abs(p.imag)
-
-
-def uncurry(f):
-    def inner(t):
-        return f(*t)
-
-    return inner
 
 
 def part1(s: str) -> int:
