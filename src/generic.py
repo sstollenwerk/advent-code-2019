@@ -1,19 +1,49 @@
+from collections import defaultdict
+from functools import partial
+from itertools import groupby
+
 from typing import Callable, TypeVar
 from collections.abc import Iterable
-from collections import defaultdict
 
 T = TypeVar("T")
 V = TypeVar("V")
+U = TypeVar("U")
 IntCode = defaultdict[int, int]
 
 toSameType = Callable[[T], T]
 
+position = tuple[int, int]
+
+def delta(a:position, b:position) -> position:
+        x1,y1 = a
+        x2,y2 = b
+        return (x1-x2, y1-y2)
 
 def get_file(n: int):
     dir = "../input/" + str(n).zfill(2) + ".txt"
     with open(dir, "r") as f:
         return f.read()
 
+def as_pos(c:complex|position) -> position:
+    if isinstance(c, complex):
+        
+        return (round(c.real), round(c.imag))
+    return c
+
+def map_vals(f: Callable[[T], V], d: dict[U, T]) -> dict[U, V]:
+    return {k: f(v) for k, v in d.items()}
+
+
+def map_keys(f: Callable[[T], V], d: dict[T, U]) -> dict[V, U]:
+    return {f(k): v for k, v in d.items()}
+
+def as_grid(d:dict[complex|position, T]) -> list[list[T]]:
+    d = map_keys(as_pos, d)
+    rows = [list(v) for k,v in  groupby(  sorted(d.keys() ), lambda x:x[0]) ]
+    
+    res =  [ [d[i] for i in r] for r in rows]
+    
+    return res
 
 def iterate(f: toSameType, x: T) -> Iterable[T]:
     """implement
@@ -29,14 +59,19 @@ def parse_intcode(s: str) -> IntCode:
     return defaultdict(int, enumerate(map(int, s.split(","))))
 
 
-def get_vals(params: int, command: int, xs: IntCode, i: int) -> Iterable[int]:
-    required_posses = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 99: 0}
+def get_vals(params: int, command: int, xs: IntCode, i: int, rel_base:int) -> Iterable[int]:
+    required_posses = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3,9:1, 99: 0}
     required_vals = required_posses.get(command, 0)
     for k in range(i, i + required_vals):
         params, mode = divmod(params, 10)
         v = xs[k]
-        if k == i + required_vals - 1 and command not in {5, 6}:
-            yield v
+        if k == i + required_vals - 1 and command not in {4,5, 6,9}:
+            match mode:
+                case 0|1:
+                    yield v
+                case 2:
+                    yield v+rel_base
+                    
             continue
             # this section is a pain
         match mode:
@@ -44,15 +79,19 @@ def get_vals(params: int, command: int, xs: IntCode, i: int) -> Iterable[int]:
                 yield xs[v]
             case 1:
                 yield v
+                
+            case 2:
+                yield xs[v+rel_base]
 
 
 def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
     xs = xs_.copy()
     i = 0
+    rel_base = 0
     while True:
         params, command = divmod(xs[i], 100)
         i += 1
-        vals = list(get_vals(params, command, xs, i))
+        vals = list(get_vals(params, command, xs, i, rel_base))
         jump = False
         match command:
             case 1:
@@ -67,7 +106,7 @@ def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
                 xs[a] = r
             case 4:
                 a = vals[0]
-                yield xs[a]
+                yield a
             case 5:
                 a, b = vals
                 if bool(a):
@@ -84,6 +123,10 @@ def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
             case 8:
                 a, b, c = vals
                 xs[c] = int(a == b)
+            
+            case 9:
+                a = vals[0]
+                rel_base += a
             case 99:
                 # print(xs)
                 yield xs[0]
