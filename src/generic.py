@@ -1,9 +1,10 @@
 from typing import Callable, TypeVar
 from collections.abc import Iterable
+from collections import defaultdict
 
 T = TypeVar("T")
 V = TypeVar("V")
-IntCode = list[int]
+IntCode = defaultdict[int, int]
 
 toSameType = Callable[[T], T]
 
@@ -25,26 +26,55 @@ def iterate(f: toSameType, x: T) -> Iterable[T]:
 
 
 def parse_intcode(s: str) -> IntCode:
-    return list(map(int, s.split(",")))
+    return defaultdict(int, enumerate(map(int, s.split(","))))
 
 
-def iterpret_intcode(xs_: IntCode) -> int:
+def get_vals(params: int, command: int, xs: IntCode, i: int) -> Iterable[int]:
+    required_posses = {1: 3, 2: 3, 3: 1, 4: 1, 99: 0}
+    required_vals = required_posses.get(command, 0)
+    for k in range(i, i + required_vals):
+        params, mode = divmod(params, 10)
+        v = xs[k]
+        if k == i + required_vals - 1:
+            yield v
+            continue
+            # this section is a pain
+        match mode:
+            case 0:
+                yield xs[v]
+            case 1:
+                yield v
+
+
+def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
     xs = xs_.copy()
     i = 0
     while True:
-
-        a, b, c, *ignore = xs[i + 1 :]
-        match xs[i]:
+        params, command = divmod(xs[i], 100)
+        i += 1
+        vals = list(get_vals(params, command, xs, i))
+        match command:
             case 1:
-
-                xs[c] = xs[a] + xs[b]
+                a, b, c = vals
+                xs[c] = a + b
             case 2:
-                xs[c] = xs[a] * xs[b]
+                a, b, c = vals
+                xs[c] = a * b
+            case 3:
+                a = vals[0]
+                r = yield None
+                xs[a] = r
+            case 4:
+                a = vals[0]
+                print(a, xs)
+                yield xs[a]
             case 99:
-                return xs[0]
-            case _:
-                raise ValueError(f"{i=}, {xs[i]=},{xs=}")
-        i += 4
+                # print(xs)
+                yield xs[0]
+                return
+            case n:
+                raise ValueError(f"{i=}, {n=}, {xs[i]=},{xs=}")
+        i += len(vals)
 
 
 def flist(fs: list[Callable[[T], V]], x: T) -> list[V]:
@@ -53,3 +83,10 @@ def flist(fs: list[Callable[[T], V]], x: T) -> list[V]:
 
 def ilen(xs: Iterable[T]) -> int:
     return sum(1 for _ in xs)
+
+
+def cat_maybes(xs: Iterable[T | None]) -> Iterable[T]:
+    """port of
+    https://hackage.haskell.org/package/base-4.15.0.0/docs/Data-Maybe.html#v:catMaybes
+    """
+    return (i for i in xs if i is not None)

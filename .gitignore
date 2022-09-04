@@ -2,3 +2,5 @@
 *.exe
 *.pdb
 /input/*.txt
+
+src/__pycache__

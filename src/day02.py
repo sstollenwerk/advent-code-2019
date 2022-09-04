@@ -1,12 +1,16 @@
-from generic import get_file, parse_intcode, iterpret_intcode
+from generic import get_file, parse_intcode, iterpret_intcode, cat_maybes
 
 
 def part1(s: str) -> int:
     data = parse_intcode(s)
     data[1] = 12
     data[2] = 2
-    res = iterpret_intcode(data)
+    res = int_incode(data)
     return res
+
+
+def int_incode(data):
+    return next(cat_maybes(iterpret_intcode(data)))
 
 
 def part2(s: str) -> int:
@@ -16,7 +20,7 @@ def part2(s: str) -> int:
             data = data_.copy()
             data[1] = noun
             data[2] = verb
-            if iterpret_intcode(data) == 19690720:
+            if int_incode(data) == 19690720:
                 return (100 * noun) + verb
     raise ValueError()
 
