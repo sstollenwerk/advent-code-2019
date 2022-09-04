@@ -30,12 +30,12 @@ def parse_intcode(s: str) -> IntCode:
 
 
 def get_vals(params: int, command: int, xs: IntCode, i: int) -> Iterable[int]:
-    required_posses = {1: 3, 2: 3, 3: 1, 4: 1, 99: 0}
+    required_posses = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 99: 0}
     required_vals = required_posses.get(command, 0)
     for k in range(i, i + required_vals):
         params, mode = divmod(params, 10)
         v = xs[k]
-        if k == i + required_vals - 1:
+        if k == i + required_vals - 1 and command not in {5, 6}:
             yield v
             continue
             # this section is a pain
@@ -53,6 +53,7 @@ def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
         params, command = divmod(xs[i], 100)
         i += 1
         vals = list(get_vals(params, command, xs, i))
+        jump = False
         match command:
             case 1:
                 a, b, c = vals
@@ -66,15 +67,32 @@ def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
                 xs[a] = r
             case 4:
                 a = vals[0]
-                print(a, xs)
                 yield xs[a]
+            case 5:
+                a, b = vals
+                if bool(a):
+                    i = b
+                    jump = True
+            case 6:
+                a, b = vals
+                if not bool(a):
+                    i = b
+                    jump = True
+            case 7:
+                a, b, c = vals
+                xs[c] = int(a < b)
+            case 8:
+                a, b, c = vals
+                xs[c] = int(a == b)
             case 99:
                 # print(xs)
                 yield xs[0]
                 return
             case n:
                 raise ValueError(f"{i=}, {n=}, {xs[i]=},{xs=}")
-        i += len(vals)
+
+        if not jump:
+            i += len(vals)
 
 
 def flist(fs: list[Callable[[T], V]], x: T) -> list[V]:

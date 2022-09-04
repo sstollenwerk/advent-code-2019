@@ -9,12 +9,11 @@ def part1(s: str) -> int:
     return list(cat_maybes(r))[:-1]
 
 
-def int_incode(data):
-    return next(cat_maybes(iterpret_intcode(data)))
-
-
 def part2(s: str) -> int:
-    pass
+    data = parse_intcode(s)
+    r = iterpret_intcode(data)
+    next(r)
+    return r.send(5)
 
 
 def main():
