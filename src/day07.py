@@ -15,13 +15,35 @@ def get_signal(program: IntCode, sequence: list[int]) -> int:
     return signal
 
 
+def get_looping_signal(program: IntCode, sequence: list[int]) -> int:
+    sequence = list(sequence)
+    comps = [iterpret_intcode(deepcopy(program)) for _ in sequence]
+    for (s, c) in zip(sequence, comps):
+        next(c)
+        c.send(s)
+
+    signals: list[int] = []
+    signal = 0
+    while True:
+        for c in comps:
+            try:
+                s = c.send(signal)
+            except StopIteration:
+                return signals[-6]
+                # for compatability with part 2, computer sends last data[0] before halting
+            if s is not None:
+                signal = s
+                signals.append(signal)
+
+
 def part1(s: str) -> int:
     code = parse_intcode(s)
     return max(map(partial(get_signal, code), permutations(range(5))))
 
 
 def part2(s: str) -> int:
-    pass
+    code = parse_intcode(s)
+    return max(map(partial(get_looping_signal, code), permutations(range(5, 10))))
 
 
 def main():
