@@ -2,6 +2,7 @@ from typing import Callable, TypeVar
 from collections.abc import Iterable
 
 T = TypeVar("T")
+V = TypeVar("V")
 IntCode = list[int]
 
 toSameType = Callable[[T], T]
@@ -44,3 +45,11 @@ def iterpret_intcode(xs_: IntCode) -> int:
             case _:
                 raise ValueError(f"{i=}, {xs[i]=},{xs=}")
         i += 4
+
+
+def flist(fs: list[Callable[[T], V]], x: T) -> list[V]:
+    return [f(x) for f in fs]
+
+
+def ilen(xs: Iterable[T]) -> int:
+    return sum(1 for _ in xs)
