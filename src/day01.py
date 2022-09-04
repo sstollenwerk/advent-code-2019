@@ -4,7 +4,7 @@ from generic import get_file, iterate
 
 
 def section(n: int) -> int:
-    return max( (n // 3) - 2, 0)
+    return max((n // 3) - 2, 0)
 
 
 def full_section(n: int) -> int:

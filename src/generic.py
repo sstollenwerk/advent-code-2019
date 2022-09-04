@@ -2,6 +2,7 @@ from typing import Callable, TypeVar
 from collections.abc import Iterable
 
 T = TypeVar("T")
+IntCode = list[int]
 
 toSameType = Callable[[T], T]
 
@@ -20,3 +21,26 @@ def iterate(f: toSameType, x: T) -> Iterable[T]:
     while True:
         yield x
         x = f(x)
+
+
+def parse_intcode(s: str) -> IntCode:
+    return list(map(int, s.split(",")))
+
+
+def iterpret_intcode(xs_: IntCode) -> int:
+    xs = xs_.copy()
+    i = 0
+    while True:
+
+        a, b, c, *ignore = xs[i + 1 :]
+        match xs[i]:
+            case 1:
+
+                xs[c] = xs[a] + xs[b]
+            case 2:
+                xs[c] = xs[a] * xs[b]
+            case 99:
+                return xs[0]
+            case _:
+                raise ValueError(f"{i=}, {xs[i]=},{xs=}")
+        i += 4
