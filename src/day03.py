@@ -24,6 +24,10 @@ def is_horiz(w: wire):
     return w[0].real == w[1].real
 
 
+def points(wires: list[wire]):
+    return [wires[0][0]] + [w[1] for w in wires]
+
+
 def intersection(a: wire, b: wire) -> point | None:
     # where does (0,0) -> (0,5) intersect with (8,7) -> (5,7)? (0,7) which isn't on line.
     # where does (0,0) -> (0,5) intersect with (8,7) -> (8,9)? Nowhere
@@ -43,21 +47,50 @@ def intersection(a: wire, b: wire) -> point | None:
 
 
 def wires(deltas: list[delta]) -> list[wire]:
-    return list(accumulate(deltas, to_wire, initial=(0, 0)))
+    return list(accumulate(deltas, to_wire, initial=(0 + 0j, 0 + 0j)))[1:]
 
 
 def manhatten(p: point) -> float:
     return abs(p.real) + abs(p.imag)
 
 
+def uncurry(f):
+    def inner(t):
+        return f(*t)
+
+    return inner
+
+
 def part1(s: str) -> int:
-    wires_ = [wires(list(map(asdelta, W.split(',')))) for W in s.split()]
+    wires_ = [wires(list(map(asdelta, W.split(",")))) for W in s.split()]
     crosses = filter(bool, starmap(intersection, product(*wires_)))
     return round(min(map(manhatten, crosses)))
 
 
+def dist_to(k: point, p: point):
+    return round(abs(p - k))
+
+
+def wire_dist(ds: list[delta]) -> dict[delta, int]:
+    dists = accumulate(map(abs, ds), initial=0)
+    return {w: int(d) for (w, d) in zip(points(wires(ds)), dists)}
+
+
 def part2(s: str) -> int:
-    pass
+    deltas = [list(map(asdelta, W.split(","))) for W in s.split()]
+    wires_ = [wires(d) for d in deltas]
+
+    crosses = {
+        (k[0][0], k[1][0]): (v) for k in product(*wires_) if (v := intersection(*k))
+    }
+
+    dist_datas = list(map(wire_dist, deltas))
+
+    dists = (
+        sum(d[p] + dist_to(p, v) for d, p in zip(dist_datas, k))
+        for k, v in crosses.items()
+    )
+    return min(dists)
 
 
 def main():
