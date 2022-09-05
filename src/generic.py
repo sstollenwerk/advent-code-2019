@@ -27,6 +27,10 @@ def delta(a: position, b: position) -> position:
     x2, y2 = b
     return (x1 - x2, y1 - y2)
 
+def tup_add(a: position, b: position) -> position:
+    a = complex(*a)
+    b = complex(*b)
+    return as_pos(a+b)
 
 def get_file(n: int):
     dir = "../input/" + str(n).zfill(2) + ".txt"
