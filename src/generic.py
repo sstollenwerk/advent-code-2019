@@ -12,7 +12,7 @@ IntCode = defaultdict[int, int]
 
 toSameType = Callable[[T], T]
 
-position = tuple[int, int]
+Position = tuple[int, int]
 
 
 def bin_items(f: Callable[[T], V], xs: list[T]) -> defaultdict[V, list[T]]:
@@ -22,15 +22,17 @@ def bin_items(f: Callable[[T], V], xs: list[T]) -> defaultdict[V, list[T]]:
     return d
 
 
-def delta(a: position, b: position) -> position:
+def delta(a: Position, b: Position) -> Position:
     x1, y1 = a
     x2, y2 = b
     return (x1 - x2, y1 - y2)
 
-def tup_add(a: position, b: position) -> position:
+
+def tup_add(a: Position, b: Position) -> Position:
     a = complex(*a)
     b = complex(*b)
-    return as_pos(a+b)
+    return as_pos(a + b)
+
 
 def get_file(n: int):
     dir = "../input/" + str(n).zfill(2) + ".txt"
@@ -38,7 +40,7 @@ def get_file(n: int):
         return f.read()
 
 
-def as_pos(c: complex | position) -> position:
+def as_pos(c: complex | Position) -> Position:
     if isinstance(c, complex):
 
         return (round(c.real), round(c.imag))
@@ -53,7 +55,22 @@ def map_keys(f: Callable[[T], V], d: dict[T, U]) -> dict[V, U]:
     return {f(k): v for k, v in d.items()}
 
 
-def to_d(s_: set[complex | position]) -> dict[position, bool]:
+def as_display(data: set[complex | Position] | dict[complex | Position, bool]) -> str:
+    if isinstance(data, dict):
+        data = {k for k, v in data.items() if v}
+    s = set(map(as_pos, data))
+    disp = [" ", "*"].__getitem__
+    d = to_d(s)
+
+    d = map_vals(disp, d)
+    grid = as_grid(d)
+
+    r = "\n".join("".join(r) for r in grid)
+
+    return r
+
+
+def to_d(s_: set[complex | Position]) -> dict[Position, bool]:
     s = set(map(as_pos, s_))
     a = {i[0] for i in s}
     b = {i[1] for i in s}
@@ -63,7 +80,7 @@ def to_d(s_: set[complex | position]) -> dict[position, bool]:
     return {p: p in s for p in posses}
 
 
-def as_grid(d: dict[complex | position, T]) -> list[list[T]]:
+def as_grid(d: dict[complex | Position, T]) -> list[list[T]]:
 
     d = map_keys(as_pos, d)
     rows = [list(v) for k, v in groupby(sorted(d.keys()), lambda x: x[0])]
