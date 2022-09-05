@@ -40,11 +40,28 @@ def get_file(n: int):
         return f.read()
 
 
+def rotate_counterclockwise(p: Position) -> Position:
+    c = complex(*p)
+    c *= 0 + 1j
+    return as_pos(c)
+
+
+def rotate_clockwise(p: Position) -> Position:
+    c = complex(*p)
+    c *= 0 - 1j
+    return as_pos(c)
+
+
 def as_pos(c: complex | Position) -> Position:
     if isinstance(c, complex):
 
         return (round(c.real), round(c.imag))
     return c
+
+
+def transpose(p: Position) -> Position:
+    a, b = p
+    return (b, a)
 
 
 def map_vals(f: Callable[[T], V], d: dict[U, T]) -> dict[U, V]:

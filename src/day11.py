@@ -12,12 +12,14 @@ from generic import (
     as_pos,
     map_keys,
     as_display,
+    rotate_counterclockwise,
 )
 
 
-def make_panel(code: IntCode) -> dict[Position, bool]:
+def make_panel(code: IntCode, start=0) -> dict[Position, bool]:
     panel = defaultdict(bool)
     position = 0 + 0j
+    panel[position] = bool(start)
     direction = 0 + 1j
     rotation = [0 + 1j, 0 - 1j].__getitem__
     comp = iterpret_intcode(code)
@@ -41,7 +43,8 @@ def part1(s: str) -> int:
 
 
 def part2(s: str) -> None:
-    pass
+    code = parse_intcode(s)
+    print(as_display(map_keys(rotate_counterclockwise, make_panel(code, 1))))
 
 
 def main():
