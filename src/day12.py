@@ -1,3 +1,5 @@
+from math import lcm
+
 from more_itertools import nth
 
 from generic import (
@@ -35,6 +37,14 @@ def step_single_axis(moons: list[MoonAxis]) -> MoonAxis:
     return new_state
 
 
+def loop_steps(moons: list[MoonAxis]) -> int:
+    seen = set()
+    for i, el in enumerate(map(tuple, iterate(step_single_axis, moons))):
+        if el in seen:
+            return i
+        seen.add(el)
+
+
 def potential_energy(m: Moon) -> int:
     positions, velocities = zip(*m)
     return sum(map(abs, positions)) * sum(map(abs, velocities))
@@ -50,7 +60,8 @@ def part1(s: str) -> int:
 
 
 def part2(s: str) -> int:
-    pass
+    times = map(loop_steps, parse(s))
+    return lcm(*times)
 
 
 def main():
