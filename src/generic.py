@@ -148,7 +148,9 @@ def get_vals(
                 yield xs[v + rel_base]
 
 
-def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
+def iterpret_intcode(
+    xs_: IntCode, ask: Callable[[], int] | None = None
+) -> Iterable[int | None]:
     xs = xs_.copy()
     i = 0
     rel_base = 0
@@ -166,7 +168,10 @@ def iterpret_intcode(xs_: IntCode) -> Iterable[int | None]:
                 xs[c] = a * b
             case 3:
                 a = vals[0]
-                r = yield None
+                if ask is None:
+                    r = yield None
+                else:
+                    r = ask()
                 xs[a] = r
             case 4:
                 a = vals[0]
