@@ -152,7 +152,11 @@ fn extend(mut p: Program, n: usize) -> Program {
     p
 }
 
-pub fn interpret(mut prog: ProgramState, input_: &Data) -> (ProgramState, Option<Num>) {
+pub fn interpret(
+    mut prog: ProgramState,
+    input_: &Data,
+    human_input: bool,
+) -> (ProgramState, Option<Num>) {
     let mut data = prog.program;
     let mut i = prog.pointer;
     let mut relative_base = prog.relative_base;
@@ -214,7 +218,18 @@ pub fn interpret(mut prog: ProgramState, input_: &Data) -> (ProgramState, Option
         match op {
             1 => *res = registers[0] + registers[1],
             2 => *res = registers[0] * registers[1],
-            3 => *res = *input.next().unwrap(),
+            3 => {
+                *res = if !human_input {
+                    *input.next().unwrap()
+                } else {
+                    let mut line = String::new();
+                    println!("input :");
+                    std::io::stdin().read_line(&mut line).unwrap();
+                    println!("{:?}", &line);
+
+                    line.trim().parse::<Num>().unwrap()
+                }
+            }
             4 => result = Some(*res),
             5 => {
                 if registers[0] != 0 {

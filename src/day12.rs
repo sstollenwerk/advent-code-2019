@@ -4,11 +4,14 @@ use std::fs;
 use crate::lib::Num;
 use crate::lib::{display, s_display, to_filename};
 
+use std::collections::HashMap;
+
 use nalgebra::{Point3, Vector3};
 
-//type Position = Point3<Num>;
+use num::integer::lcm;
+use num::Integer;
+
 type Position = Vector3<Num>;
-// should be point but doesn't implement useful funcs
 
 type Velocity = Vector3<Num>;
 
@@ -85,21 +88,58 @@ fn total_energy(p: Particle) -> Num {
 pub fn part1() -> Num {
     let mut poses = get_data();
     println!("{:?}", poses);
-    println!("");
 
     let mut vels: Velocities = poses.iter().map(|_| Velocity::zeros()).collect();
 
-    for _ in (0..1000) {
+    for i in (0..100) {
         (poses, vels) = step(poses, vels);
-        // println!("{:?}", poses);
-        //   println!("{:?}", vels);
-        //     println!("");
     }
 
     let particles = poses.into_iter().zip(vels.into_iter());
-    particles.map(|p| total_energy(p)).sum()
+    particles.map( total_energy).sum()
+}
+
+fn lcm_xs(vals: &[Num]) -> Num {
+    vals.iter().copied().reduce(|a, b| a.lcm(&b)).unwrap()
 }
 
 pub fn part2() -> Num {
-    todo!()
+    let poses_start = get_data();
+
+    let velocities: Velocities = poses_start.iter().map(|_| Velocity::zeros()).collect();
+
+    let mut taken = Vec::new();
+
+    for c in (0..poses_start[0].len()) {
+        let mut poses = poses_start.clone();
+        let mut vels = velocities.clone();
+
+        let mut prevs = HashMap::new();
+
+        for i in (0..) {
+            let p_: Vec<_> = poses.iter().map(|k| k[c]).collect();
+            let v_: Vec<_> = vels.iter().map(|k| k[c]).collect();
+            let state = (p_, v_);
+            if prevs.contains_key(&state) {
+                let k = prevs[&state];
+                taken.push((k, i));
+                break;
+            } else {
+                prevs.insert(state, i);
+            }
+
+            (poses, vels) = step(poses, vels);
+        }
+
+        // not sure how to handle it if start state wasn't 0 but don't have to
+    }
+
+    println!("{:?}", taken);
+
+    assert!(taken.iter().all(|&x| x.0 == 0));
+    taken
+        .into_iter()
+        .map(|x| x.1)
+        .reduce(|a, b| a.lcm(&b))
+        .unwrap()
 }
