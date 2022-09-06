@@ -227,3 +227,7 @@ def uncurry(f):
         return f(*t)
 
     return inner
+
+
+def flatten(c):
+    return (a for b in c for a in b)
