@@ -2,6 +2,9 @@ from collections import defaultdict, Counter
 from copy import deepcopy
 from math import ceil
 
+from typing import Callable
+
+from scipy.optimize import bisect
 
 from generic import (
     get_file,
@@ -62,27 +65,58 @@ def topological_sort(d_: dict[T, list[T]]) -> list[T]:
     return res
 
 
-def find_required(r: Requires, q: Quant) -> Counter[Mineral]:
+def find_required(
+    r: Requires, q: Quant
+) -> tuple[int, Counter[Mineral], Counter[Mineral]]:
     order = topological_sort(without_amts(r))
     required = Counter(dict([q]))
-    for o in order[:-1]:
+    for o in order:
         amt, takes = r.get(o, (0, []))
         req = required[o]
         for (mineral, a) in takes:
             required[mineral] += a * ceil(req / amt)
         ##del required[o]
-    return required
+    return required[order[-1]]
+
+
+def bisecter(f: Callable[int, int]) -> Callable[int, int]:
+    # for strictly monotonours seequences
+    def inner(n: int) -> int:
+        if f(n) == 0 or (f(n) < 0 and f(n + 1) > 0):
+            return 0
+
+        if f(n) > 0:
+            return 1
+        return -1
+
+    return inner
 
 
 def part1(s) -> int:
     graph = parse(s)
     order = topological_sort(without_amts(graph))
     needed = ("FUEL", 1)
-    return find_required(graph, needed)["ORE"]
+    return find_required(graph, needed)
 
 
 def part2(s) -> int:
-    pass
+    graph = parse(s)
+
+    # bisection
+
+    available = 1000000000000
+
+    f = lambda x: find_required(graph, ("FUEL", x)) - available
+
+    g = bisecter(f)
+
+    near = round(bisect(f, 1, available))
+    # has a floating point result not int
+
+    # get exact solution instead of one that's very close but probably correct - just in case
+    while delta := g(near):
+        near -= delta
+    return near
 
 
 def main():
