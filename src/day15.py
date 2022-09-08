@@ -1,7 +1,7 @@
 from functools import partial
 from copy import deepcopy
 from collections import defaultdict
-from itertools import islice
+from itertools import islice, count
 from time import sleep
 from ast import literal_eval
 
@@ -55,22 +55,49 @@ def part1(s: str) -> int:
     ##code = parse_intcode(s)
     ##grid =  move(code)
     grid = literal_eval(get_file("hardcoded_day15_grid"))
-    display(grid)
     # solved maze before doing dijkastra stuff.
     start = 0 + 0j
     end = next((k for k, v in grid.items() if v == 2))
     floor = {k for k, v in grid.items() if v >= 1}
     is_end = lambda x: x == end
     neighbours = get_neighbours(floor)
-    print(neighbours(16j))
 
-    return graph_search(start, neighbours, is_end)
+    return graph_search(start, neighbours, is_end)[end]
+
+
+def part2(s: str) -> int:
+    ##code = parse_intcode(s)
+    ##grid = move(code)
+    # forgot to call expand_through after going all of maze - remembered to print maze though.
+    maze = get_file("hardcoded_maze_look")
+    grid = {}
+    for y, line in enumerate(maze.split("\n")):
+        for x, c in enumerate(line):
+            grid[complex(x, y)] = {" ": -1, "#": 0, ".": 1, "*": 2, "D": 3}[c]
+    start = next((k for k, v in grid.items() if v == 2))
+    floor = {k for k, v in grid.items() if v >= 1}
+
+    return expand_through(start, floor)
+
+
+def adjacences(xs: set[complex]):
+    return {p + d for d in {1, -1, 1j, -1j, 0} for p in xs}
+
+
+def expand_through(start: complex, open: set[complex]) -> int:
+    seen = {start}
+
+    for i in count(start=0):
+        next_ = adjacences(seen) & open
+        if next_ == seen:
+            return i
+        seen = next_
 
 
 def get_input() -> int:
     posses = {"w": 1, "s": 2, "d": 3, "a": 4}
     print("move: ")
-    while (c := keyboard.read_key(suppress=True)) not in posses.keys():
+    while (c := keyboard.read_key()) not in posses.keys():
         if c == "esc":
             raise EOFError
         continue
@@ -108,10 +135,6 @@ def move(code):
             display(tmp)
     except EOFError:  # ctrl+z
         return grid
-
-
-def part2(s: str) -> int:
-    pass
 
 
 def main():
