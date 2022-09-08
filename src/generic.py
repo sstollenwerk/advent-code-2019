@@ -87,6 +87,11 @@ def as_display(data: set[complex | Position] | dict[complex | Position, bool]) -
     return r
 
 
+def fill(d: dict[Position, V], blank: V) -> dict[Position, V]:
+    blanks = {k: blank for k in to_d(set(d.keys())).keys()}
+    return blanks | d
+
+
 def to_d(s_: set[complex | Position]) -> dict[Position, bool]:
     s = set(map(as_pos, s_))
     a = {i[0] for i in s}
@@ -231,3 +236,29 @@ def uncurry(f):
 
 def flatten(c):
     return (a for b in c for a in b)
+
+
+Node = TypeVar("Node")
+Edge = tuple[Node, int]
+
+
+def graph_search(
+    start: Node,
+    neighbours: Callable[[Node], list[Node]],
+    success: Callable[[Node], bool],
+) -> list[Node]:
+    # for unweighted graphs
+    to_check = {start}
+
+    seen = set()
+
+    costs = {start: 0}
+
+    while to_check:
+        p = to_check.pop()
+        for n in neighbours(p):
+            costs[n] = min(costs[p] + 1, costs.get(n, float("inf")))
+            to_check.add(n)
+        seen.add(p)
+        to_check -= seen
+    return {k: v for k, v in costs.items() if success(k)}
