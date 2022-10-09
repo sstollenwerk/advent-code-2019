@@ -1,4 +1,4 @@
-from copy import deepcopy
+from itertools import count
 
 from generic import (
     get_file,
@@ -15,6 +15,7 @@ from generic import (
     as_grid,
     fill,
     flatten,
+    tup_add,
 )
 
 
@@ -24,16 +25,36 @@ def make_input(n: int) -> list[int]:
             yield (x, y)
 
 
+def find_gridsize(s, data):
+    for i in count(start=0):
+        dels = [complex(real=i, imag=0), complex(real=0, imag=-i)]
+        dels.append(dels[0] + dels[1])
+        for d in dels:
+            p = s + d
+            if not data.get(p, False):
+                return i
+
+
 def part1(s: str) -> int:
     code = parse_intcode(s)
-    input_ = make_input(50)
     data = {}
 
-    for i in input_:
+    start = 0
 
-        f = iter(i).__next__
-        res = next(iterpret_intcode(deepcopy(code), f))
-        data[i] = res
+    for y in range(50):
+        seen = None
+        for x in range(start, 50):
+            i_ = (x, y)
+            f = iter(i_).__next__
+            i = complex(real=x, imag=y)
+            res = bool(next(iterpret_intcode(code, f)))
+            data[i] = res
+            if not (seen) and res:
+                seen = i
+                start = x
+            if seen is not None and not res:
+                break
+        # print(as_display(data))
 
     print(as_display(data))
 
@@ -41,12 +62,43 @@ def part1(s: str) -> int:
 
 
 def part2(s: str) -> int:
-    pass
+
+    code = parse_intcode(s)
+    data = {}
+
+    start = 0
+
+    for y in count(0):
+        seen = None
+        for x in count(start):
+            i_ = (x, y)
+            f = iter(i_).__next__
+            i = complex(real=x, imag=y)
+            res = bool(next(iterpret_intcode(code, f)))
+            # if res:
+            #    print(i)
+            data[i] = res
+            if x - 10 > start and seen is None:
+                break
+            if not (seen) and res:
+                seen = i
+                start = x
+            if seen is not None and not res:
+                break
+        if seen:
+            m = 100
+            if find_gridsize(seen, data) == m:
+                x, y_ = as_pos(seen)
+                y = y_ - (m - 1)
+                return x * 10000 + y
+
+        # print(as_display(data))
 
 
 def main():
     s = get_file(19)
     print(f"{part1(s)=}")
+
     print(f"{part2(s)=}")
 
 
