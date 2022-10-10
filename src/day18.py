@@ -35,7 +35,7 @@ def from_frozdict(d: frozDict) -> dict[T, V]:
 
 @dataclass
 class Maze:
-    location: complex
+    locations: frozenset[complex]
     floor: frozenset[complex]
     keys: dict[str, complex]
     doors: dict[str, complex]
@@ -48,7 +48,7 @@ class Maze:
             for j, c in enumerate(row)
             if c != "#"
         }
-        start = next(k for k, v in nodes.items() if v == "@")
+        start = frozenset([k for k, v in nodes.items() if v == "@"])
 
         floor = frozenset({k for k, v in nodes.items()})
         keys = {v: k for k, v in nodes.items() if v.islower()}
@@ -57,7 +57,7 @@ class Maze:
         return cls(start, floor, keys, doors)
 
 
-Node = [frozenset[str], complex]
+Node = [frozenset[str], frozenset[complex]]
 Edge = tuple[Node, int]
 
 
@@ -65,11 +65,18 @@ def adjacences(c: complex) -> set[complex]:
     return {c + d for d in {1, -1, 1j, -1j}}
 
 
+def replace(xs_, i, k):
+    xs = xs_.copy()
+    xs[i] = k
+    return xs
+
+
 def get_neighbours_alt(m: Maze):
     nodes = m.floor
 
     def neighbours(n: Node) -> Edge:
-        seen, start = n
+        seen, starts = n
+        starts = sorted(starts, key=lambda c: (c.real, c.imag))
         to_see = set(m.keys.keys()) - seen
 
         to_open = {m.doors.get(i.upper()) for i in to_see}
@@ -77,46 +84,28 @@ def get_neighbours_alt(m: Maze):
         dests = {v: k for k, v in m.keys.items() if k in to_see}
 
         nei = lambda c: (adjacences(c) & nodes) - to_open
+        vals = []
+        for j, start in enumerate(starts):
+            step = {start}
+            res = {}
+            seen_ = set()
+            i = 0
+            while step:
+                for k in step:
+                    res[k] = i
+                next_ = set(flatten(map(nei, step))) - seen_
+                seen_ |= step
+                i += 1
+                step = next_
 
-        step = {start}
-        res = {}
-        seen_ = set()
-        i = 0
-        while step:
-            for k in step:
-                res[k] = i
-            next_ = set(flatten(map(nei, step))) - seen_
-            seen_ |= step
-            i += 1
-            step = next_
+            part = [
+                (((seen | {v}, frozenset(replace(starts, j, k)))), res[k])
+                for k, v in dests.items()
+                if k in res
+            ]
+            vals.extend(part)
 
-        return sorted([((seen | {v}, k), res[k]) for k, v in dests.items() if k in res])
-
-    return neighbours
-
-
-def get_neighbours(m: Maze):
-    nodes = m.floor
-
-    # @cache
-    def neighbours(n: Node) -> Edge:
-        seen, start = n
-        to_see = set(m.keys.keys()) - seen
-        to_open = {m.doors.get(i.upper()) for i in to_see}
-
-        nei = lambda c: [(i, 1) for i in (adjacences(c) & nodes) - to_open]
-
-        res = []
-        for key in to_see:
-            pos = m.keys[key]
-            heur = lambda x: manhatten(x, pos)
-            success = lambda x: heur(x) == 0
-            dist = astar(start, nei, heur, success)
-            if dist is None:
-                continue
-            res.append(((seen | {key}, pos), dist))
-
-        return sorted(res)
+        return sorted(vals)
 
     return neighbours
 
@@ -135,7 +124,7 @@ def part1(s: str) -> int:
 
     neighbours = get_neighbours_alt(maze)
 
-    start = (frozenset(), maze.location)
+    start = (frozenset(), maze.locations)
 
     r = weighted_graph_search(start, neighbours, success)
 
@@ -144,8 +133,32 @@ def part1(s: str) -> int:
     return min(r.values())
 
 
-def part2(n: Node) -> int:
-    pass
+def part2(s: str) -> int:
+    maze = Maze.from_str(s)
+
+    p = list(maze.locations)[0]
+
+    maze.floor -= {p} | adjacences(p)
+
+    dirs = (1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j)
+
+    maze.locations = frozenset(p + d for d in dirs)
+
+    success = lambda m: m[0] == frozenset(maze.keys.keys())
+
+    print(maze)
+
+    neighbours = get_neighbours_alt(maze)
+
+    start = (frozenset(), maze.locations)
+
+    r = dfs_weighted_graph_search(start, neighbours, success)
+    # somehow this halted before my attempt of diskstra did
+    # must have messed up implementation
+
+    print(r)
+
+    return r
 
 
 def main():
@@ -158,9 +171,10 @@ def main():
 ########.########
 #l.F..d...h..C.m#
 #################"""
+
     s = get_file(18).strip()
 
-    print(f"{part1(s)=}")
+    # print(f"{part1(s)=}")
     print(f"{part2(s)=}")
 
 

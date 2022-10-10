@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import partial
 from itertools import groupby
 
@@ -29,9 +29,9 @@ def delta(a: Position, b: Position) -> Position:
 
 
 def tup_add(a: Position, b: Position) -> Position:
-    a = complex(*a)
-    b = complex(*b)
-    return as_pos(a + b)
+    a_ = complex(*a)
+    b_ = complex(*b)
+    return as_pos(a_ + b_)
 
 
 def get_file(n: int):
@@ -70,6 +70,10 @@ def map_vals(f: Callable[[T], V], d: dict[U, T]) -> dict[U, V]:
 
 def map_keys(f: Callable[[T], V], d: dict[T, U]) -> dict[V, U]:
     return {f(k): v for k, v in d.items()}
+
+
+def flip(d: dict[U, T]) -> dict[T, U]:
+    return {v: k for k, v in d.items()}
 
 
 def as_display(data: set[complex | Position] | dict[complex | Position, bool]) -> str:
@@ -248,17 +252,133 @@ def graph_search(
     success: Callable[[Node], bool],
 ) -> list[Node]:
     # for unweighted graphs
+    neigh = lambda x: [(k, 1) for k in neighbours(x)]
+    return weighted_graph_search(start, neigh, success)
+
+
+def weighted_acyclic_digraph_search(
+    start: Node,
+    neighbours: Callable[[Node], list[Edge]],
+    success: Callable[[Node], bool],
+) -> dict[Node, int]:
+
+    to_check = deque([start])
+    hash_to_check = set(to_check)
+
+    costs = {start: 0}
+
+    res = {}
+
+    while to_check:
+        p = to_check.popleft()
+        hash_to_check -= {p}
+        for (n, cost) in neighbours(p):
+            if n not in hash_to_check:
+                to_check.append(n)
+                hash_to_check.add(n)
+            costs[n] = min(costs[p] + cost, costs.get(n, float("inf")))
+        if success(p):
+            res[p] = costs[p]
+    return res
+
+
+def dfs_weighted_graph_search(
+    start: Node,
+    neighbours: Callable[[Node], list[Edge]],
+    success: Callable[[Node], bool],
+) -> dict[Node, int]:
+
+    res = float("inf")
+
+    best_costs = {}
+
+    def dfs(node, cost):
+        nonlocal res
+        if best_costs.get(node, float("inf")) <= cost:
+            return
+        best_costs[node] = cost
+        if success(node):
+            if cost < res:
+                print(cost)
+
+            res = min(cost, res)
+            return
+        if cost > res:
+            return
+        [dfs(s, cost + c) for (s, c) in neighbours(node)]
+
+    dfs(start, 0)
+    return res
+
+
+def weighted_graph_search(
+    start: Node,
+    neighbours: Callable[[Node], list[Edge]],
+    success: Callable[[Node], bool],
+    end_early: bool = False,
+) -> dict[Node, int]:
     to_check = {start}
 
     seen = set()
 
     costs = {start: 0}
 
+    res = {}
+    prev_cost = 0
     while to_check:
-        p = to_check.pop()
-        for n in neighbours(p):
-            costs[n] = min(costs[p] + 1, costs.get(n, float("inf")))
-            to_check.add(n)
+        p = min(to_check, key=costs.get)
+        if prev_cost < costs[p]:
+            print(p, costs[p])
+            prev_cost = costs[p]
+        if success(p):
+            res[p] = costs[p]
+            if end_early:
+                return res
+
         seen.add(p)
         to_check -= seen
-    return {k: v for k, v in costs.items() if success(k)}
+        to_check -= {p}
+        if res and end_early and min(res.values()) < costs[p]:
+            break
+
+        for (n, cost) in neighbours(p):
+            costs[n] = min(costs[p] + cost, costs.get(n, float("inf")))
+            to_check.add(n)
+
+        to_check -= seen
+        to_check -= {p}
+
+    return res
+
+
+def astar(
+    start: Node,
+    neighbours: Callable[[Node], list[Edge]],
+    heuristic: Callable[[Node], int],
+    success: Callable[[Node], bool],
+):
+
+    to_check = {start}
+
+    seen = set()
+
+    costs = {start: 0}
+
+    res = {}
+    while to_check:
+        p = min(to_check, key=lambda x: costs[x] + heuristic(x))
+        if success(p):
+            return costs[p]
+
+        seen.add(p)
+        to_check -= seen
+        to_check -= {p}
+        if res and end_early and min(res.values()) < costs[p]:
+            break
+
+        for (n, cost) in neighbours(p):
+            costs[n] = min(costs[p] + cost, costs.get(n, float("inf")))
+            to_check.add(n)
+
+        to_check -= seen
+        to_check -= {p}
